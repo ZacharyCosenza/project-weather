@@ -1,8 +1,8 @@
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import numpy as np
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import bootstrap_project
@@ -93,3 +93,37 @@ class WeatherPredictor:
             },
             'model_timestamp': datetime.fromtimestamp(self._model_timestamp).strftime('%Y-%m-%d %H:%M:%S') if self._model_timestamp else 'Unknown'
         }
+
+    def predict_24h(self, start_time: datetime, current_temp: float) -> List[Dict[str, Any]]:
+        """
+        Generate 24-hour temperature forecast predictions.
+
+        Args:
+            start_time: Starting datetime for forecast
+            current_temp: Current temperature in Fahrenheit
+
+        Returns:
+            List of 24 hourly predictions, each containing:
+                - time: ISO format timestamp
+                - hour: Hour of day (0-23)
+                - predicted_temperature: Predicted temperature in F
+        """
+        model = self.load_model()
+        predictions = []
+
+        for i in range(24):
+            future_time = start_time + timedelta(hours=i)
+            month = future_time.month
+            day = future_time.day
+            hour = future_time.hour
+
+            features = np.array([[month, day, hour, current_temp]])
+            predicted_temp = model.predict(features)[0]
+
+            predictions.append({
+                "time": future_time.isoformat(),
+                "hour": hour,
+                "predicted_temperature": float(predicted_temp)
+            })
+
+        return predictions

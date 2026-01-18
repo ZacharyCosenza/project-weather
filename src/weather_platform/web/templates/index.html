@@ -2,8 +2,8 @@
 
 {% block content %}
 <div class="dashboard-grid">
-    <div class="card">
-        <h2>Make a Prediction</h2>
+    <div class="card current-weather-card">
+        <h2>Weather Data & Forecast</h2>
         <div id="status-indicator" class="status-indicator">
             <span class="status-dot {% if metrics.model_exists %}status-healthy{% else %}status-error{% endif %}"></span>
             <span class="status-text">
@@ -15,91 +15,36 @@
             </span>
         </div>
 
-        <form id="prediction-form" class="prediction-form">
-            <div class="form-group">
-                <label for="month">Month (1-12):</label>
-                <input type="number" id="month" name="month" min="1" max="12" required placeholder="e.g., 6">
-            </div>
+        <div id="loading-spinner" class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Loading weather data...</p>
+        </div>
 
-            <div class="form-group">
-                <label for="day">Day (1-31):</label>
-                <input type="number" id="day" name="day" min="1" max="31" required placeholder="e.g., 15">
+        <div id="current-weather-display" style="display:none;">
+            <div class="weather-location">
+                <h3 id="location-name">-</h3>
             </div>
-
-            <div class="form-group">
-                <label for="hour">Hour (0-23):</label>
-                <input type="number" id="hour" name="hour" min="0" max="23" required placeholder="e.g., 14">
-            </div>
-
-            <div class="form-group">
-                <label for="temp">Current Temperature (°F):</label>
-                <input type="number" id="temp" name="temp" step="0.1" required placeholder="e.g., 75.5">
-            </div>
-
-            <button type="submit" class="btn btn-primary">Predict Next Hour</button>
-        </form>
-
-        <div id="prediction-result" class="prediction-result" style="display:none;">
-            <h3>Prediction Result</h3>
-            <div class="result-value">
-                <span class="result-label">Next Hour Temperature:</span>
-                <span id="pred-value" class="result-number"></span>°F
-            </div>
-            <div class="result-details">
-                <p><strong>Input:</strong> <span id="pred-input"></span></p>
-                <p><strong>Model Updated:</strong> <span id="pred-timestamp"></span></p>
+            <div class="weather-current">
+                <div class="current-temp">
+                    <span id="current-temp-value" class="temp-large">-</span>
+                    <span class="temp-unit">°F</span>
+                </div>
+                <div class="current-forecast">
+                    <p id="forecast-description">-</p>
+                    <p class="forecast-period"><span id="forecast-period-name">-</span></p>
+                    <p class="forecast-time"><span id="weather-timestamp">-</span></p>
+                </div>
             </div>
         </div>
 
         <div id="error-message" class="error-message" style="display:none;"></div>
     </div>
 
-    <div class="card">
-        <h2>Model Performance Metrics</h2>
-        <div id="metrics-panel" class="metrics-panel">
-            <div class="metric-item">
-                <span class="metric-label">Mean Squared Error (MSE):</span>
-                <span id="metric-mse" class="metric-value">
-                    {% if metrics.mse %}{{ "%.4f"|format(metrics.mse) }}{% else %}Loading...{% endif %}
-                </span>
-            </div>
-
-            <div class="metric-item">
-                <span class="metric-label">Root Mean Squared Error (RMSE):</span>
-                <span id="metric-rmse" class="metric-value">
-                    {% if metrics.rmse %}{{ "%.4f"|format(metrics.rmse) }}{% else %}Loading...{% endif %}
-                </span>
-            </div>
-
-            <div class="metric-item">
-                <span class="metric-label">Mean Absolute Error (MAE):</span>
-                <span id="metric-mae" class="metric-value">
-                    {% if metrics.mae %}{{ "%.4f"|format(metrics.mae) }}{% else %}Loading...{% endif %}
-                </span>
-            </div>
-
-            <div class="last-update">
-                <small>Last Updated: <span id="last-updated">{{ metrics.last_updated if metrics.last_updated else 'N/A' }}</span></small>
-            </div>
-
-            <div class="auto-refresh-info">
-                <small>Auto-refreshes every 30 seconds</small>
-            </div>
+    <div class="card forecast-card">
+        <h2>24-Hour Temperature Forecast <span class="forecast-subtitle" id="forecast-subtitle">from <span id="forecast-start-time">-</span></span></h2>
+        <div id="forecast-chart-container">
+            <canvas id="forecast-chart"></canvas>
         </div>
-    </div>
-
-    <div class="card info-card">
-        <h2>About This Dashboard</h2>
-        <p>This dashboard uses an XGBoost machine learning model trained on historical weather observation data.</p>
-        <p><strong>Features used for prediction:</strong></p>
-        <ul>
-            <li>Month of the year</li>
-            <li>Day of the month</li>
-            <li>Hour of the day</li>
-            <li>Current temperature</li>
-        </ul>
-        <p><strong>The model predicts:</strong> Temperature for the next hour</p>
-        <p><strong>Model automatically updates:</strong> Every 60 minutes via scheduled pipeline runs</p>
     </div>
 </div>
 {% endblock %}

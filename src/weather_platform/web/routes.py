@@ -1,7 +1,19 @@
 from flask import Blueprint, render_template, request, jsonify, current_app
+from kedro.framework.session import KedroSession
+from kedro.framework.startup import bootstrap_project
 from .predictor import WeatherPredictor
+from .weather_api import get_current_weather
 
 web_bp = Blueprint('web', __name__)
+
+_bootstrapped = False
+
+
+def ensure_bootstrap(project_path):
+    global _bootstrapped
+    if not _bootstrapped:
+        bootstrap_project(project_path)
+        _bootstrapped = True
 
 
 def get_predictor():
@@ -21,38 +33,46 @@ def index():
     return render_template('index.html', metrics=initial_metrics)
 
 
-@web_bp.route('/api/predict', methods=['POST'])
-def predict():
+@web_bp.route('/api/forecast')
+def forecast():
     try:
-        data = request.get_json()
+        ensure_bootstrap(current_app.config['KEDRO_PROJECT_PATH'])
+        with KedroSession.create(project_path=current_app.config['KEDRO_PROJECT_PATH']) as session:
+            context = session.load_context()
+            dashboard_config = context.params.get('dashboard', {})
+            location_config = dashboard_config.get('location', {})
+            lat = location_config.get('latitude')
+            lon = location_config.get('longitude')
+            location_name = location_config.get('name', 'Unknown')
 
-        if not data:
-            return jsonify({'success': False, 'error': 'No JSON data provided'}), 400
+            if lat is None or lon is None:
+                return jsonify({
+                    'success': False,
+                    'error': 'Location coordinates not configured in parameters.yml'
+                }), 500
 
-        required_fields = ['month', 'day', 'hour', 'temp']
-        for field in required_fields:
-            if field not in data:
-                return jsonify({'success': False, 'error': f'Missing required field: {field}'}), 400
-
-        month = int(data['month'])
-        day = int(data['day'])
-        hour = int(data['hour'])
-        temp = float(data['temp'])
+        weather_data = get_current_weather(lat, lon)
 
         predictor = get_predictor()
-        result = predictor.predict(month, day, hour, temp)
+        predictions = predictor.predict_24h(
+            start_time=weather_data['start_time'],
+            current_temp=weather_data['temperature']
+        )
 
         return jsonify({
             'success': True,
-            'prediction': result['prediction'],
-            'input_features': result['input_features'],
-            'model_timestamp': result['model_timestamp']
+            'current_weather': {
+                'temperature': weather_data['temperature'],
+                'time': weather_data['start_time'].isoformat(),
+                'forecast': weather_data['short_forecast'],
+                'forecast_name': weather_data['forecast_name']
+            },
+            'predictions': predictions,
+            'location': location_name
         })
 
-    except ValueError as e:
-        return jsonify({'success': False, 'error': str(e)}), 400
     except Exception as e:
-        return jsonify({'success': False, 'error': f'Prediction failed: {str(e)}'}), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @web_bp.route('/api/metrics')

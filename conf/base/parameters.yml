@@ -2,6 +2,12 @@ data_engineering:
   missing_value_threshold: 0.1
   outlier_std_threshold: 3.0
 
+dashboard:
+  location:
+    latitude: 40.7128
+    longitude: -74.0060
+    name: "New York City"
+
 data_science:
   feature_columns:
     - ft_month
