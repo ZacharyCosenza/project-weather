@@ -7,7 +7,6 @@ Machine learning pipeline for predicting hourly temperature using XGBoost and hi
 - **Temperature Prediction**: Predict next-hour temperature based on current conditions
 - **Web Dashboard**: Interactive Flask-based interface for live predictions
 - **Automated Pipeline**: Scheduled model retraining and metric updates
-- **Model Performance**: MSE: 1.56, RMSE: 1.25, MAE: 0.89
 
 ## Quick Start
 

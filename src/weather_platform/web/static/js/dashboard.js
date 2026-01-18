@@ -1,4 +1,5 @@
 let forecastChart = null;
+let historicalChart = null;
 
 async function loadForecast() {
     showLoading();
@@ -10,7 +11,8 @@ async function loadForecast() {
 
         if (data.success) {
             displayCurrentWeather(data.current_weather, data.location);
-            displayForecastChart(data.predictions, data.current_weather.time);
+            displayShapContributions(data.shap);
+            displayCharts(data.predictions, data.current_weather.time, data.historical);
             hideLoading();
         } else {
             showError(data.error || 'Failed to load forecast');
@@ -22,11 +24,22 @@ async function loadForecast() {
     }
 }
 
+function getTemperatureEmoji(tempF) {
+    if (tempF <= 20) return '🥶';
+    if (tempF <= 32) return '❄️';
+    if (tempF <= 50) return '🌬️';
+    if (tempF <= 65) return '🌤️';
+    if (tempF <= 80) return '☀️';
+    if (tempF <= 95) return '🔥';
+    return '🌡️';
+}
+
 function displayCurrentWeather(weather, location) {
     document.getElementById('location-name').textContent = location;
     document.getElementById('current-temp-value').textContent = weather.temperature.toFixed(1);
     document.getElementById('forecast-description').textContent = weather.forecast;
     document.getElementById('forecast-period-name').textContent = weather.forecast_name;
+    document.getElementById('weather-emoji').textContent = getTemperatureEmoji(weather.temperature);
 
     const weatherTime = new Date(weather.time);
     const formattedDate = weatherTime.toLocaleDateString('en-US', {
@@ -39,16 +52,56 @@ function displayCurrentWeather(weather, location) {
     document.getElementById('weather-timestamp').textContent = formattedDate;
     document.getElementById('forecast-start-time').textContent = formattedDate;
 
-    document.getElementById('current-weather-display').style.display = 'block';
+    document.getElementById('top-cards-container').style.display = 'flex';
 }
 
-function displayForecastChart(predictions, startTimeStr) {
-    document.getElementById('forecast-card-container').style.display = 'block';
-    const ctx = document.getElementById('forecast-chart').getContext('2d');
+function displayShapContributions(shapData) {
+    if (!shapData || !shapData.contributions) return;
+
+    const colors = {
+        'Month': '#667eea',
+        'Day': '#764ba2',
+        'Hour': '#f093fb',
+        'Current Temp': '#4facfe'
+    };
+
+    const barContainer = document.getElementById('shap-stacked-bar');
+    const legendContainer = document.getElementById('shap-legend');
+
+    barContainer.innerHTML = '';
+    legendContainer.innerHTML = '';
+
+    shapData.contributions.forEach(item => {
+        const segment = document.createElement('div');
+        segment.className = 'shap-segment';
+        segment.style.width = item.percentage + '%';
+        segment.style.backgroundColor = colors[item.feature] || '#999';
+        segment.title = `${item.feature}: ${item.percentage.toFixed(1)}%`;
+        barContainer.appendChild(segment);
+    });
+
+    shapData.contributions.forEach(item => {
+        const legendItem = document.createElement('div');
+        legendItem.className = 'shap-legend-item';
+
+        const colorBox = document.createElement('span');
+        colorBox.className = 'shap-legend-color';
+        colorBox.style.backgroundColor = colors[item.feature] || '#999';
+
+        const label = document.createElement('span');
+        label.className = 'shap-legend-label';
+        label.textContent = `${item.feature}: ${item.percentage.toFixed(1)}%`;
+
+        legendItem.appendChild(colorBox);
+        legendItem.appendChild(label);
+        legendContainer.appendChild(legendItem);
+    });
+}
+
+function displayCharts(predictions, _startTimeStr, historical) {
+    document.getElementById('charts-row-container').style.display = 'flex';
 
     const currentTime = new Date();
-    const startTime = new Date(startTimeStr);
-
     const labels = predictions.map(pred => {
         const time = new Date(pred.time);
         return time.toLocaleTimeString('en-US', {
@@ -57,8 +110,6 @@ function displayForecastChart(predictions, startTimeStr) {
             hour12: true
         });
     });
-
-    const temperatures = predictions.map(pred => pred.predicted_temperature);
 
     const timestamps = predictions.map(pred => new Date(pred.time).getTime());
     const currentTimeMs = currentTime.getTime();
@@ -71,6 +122,14 @@ function displayForecastChart(predictions, startTimeStr) {
             break;
         }
     }
+
+    displayPredictionChart(predictions, labels, currentTimeIndex);
+    displayHistoricalChart(historical, labels);
+}
+
+function displayPredictionChart(predictions, labels, currentTimeIndex) {
+    const ctx = document.getElementById('forecast-chart').getContext('2d');
+    const temperatures = predictions.map(pred => pred.predicted_temperature);
 
     if (forecastChart) {
         forecastChart.destroy();
@@ -100,21 +159,14 @@ function displayForecastChart(predictions, startTimeStr) {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        font: {
-                            size: 14,
-                            weight: '500'
-                        }
-                    }
+                    display: false
                 },
                 tooltip: {
                     mode: 'index',
                     intersect: false,
                     callbacks: {
                         label: function(context) {
-                            return 'Temperature: ' + context.parsed.y.toFixed(1) + '°F';
+                            return 'Predicted: ' + context.parsed.y.toFixed(1) + '°F';
                         }
                     }
                 },
@@ -129,12 +181,12 @@ function displayForecastChart(predictions, startTimeStr) {
                             borderDash: [5, 5],
                             label: {
                                 display: true,
-                                content: 'Current Time',
+                                content: 'Now',
                                 position: 'start',
                                 backgroundColor: '#dc3545',
                                 color: '#fff',
                                 font: {
-                                    size: 11,
+                                    size: 10,
                                     weight: 'bold'
                                 }
                             }
@@ -147,10 +199,10 @@ function displayForecastChart(predictions, startTimeStr) {
                     beginAtZero: false,
                     ticks: {
                         callback: function(value) {
-                            return value.toFixed(0) + '°F';
+                            return value.toFixed(1) + '°F';
                         },
                         font: {
-                            size: 12
+                            size: 11
                         }
                     },
                     grid: {
@@ -165,7 +217,105 @@ function displayForecastChart(predictions, startTimeStr) {
                         maxRotation: 45,
                         minRotation: 45,
                         font: {
+                            size: 10
+                        }
+                    }
+                }
+            },
+            interaction: {
+                mode: 'nearest',
+                axis: 'x',
+                intersect: false
+            }
+        }
+    });
+}
+
+function displayHistoricalChart(historical, labels) {
+    const ctx = document.getElementById('historical-chart').getContext('2d');
+
+    if (historicalChart) {
+        historicalChart.destroy();
+    }
+
+    const historicalColors = [
+        '#667eea',
+        '#764ba2',
+        '#f093fb',
+        '#f5576c',
+        '#4facfe'
+    ];
+
+    const historicalDatasets = (historical || []).map((yearData, index) => ({
+        label: `${yearData.year}`,
+        data: yearData.temperatures,
+        borderColor: historicalColors[index % historicalColors.length],
+        backgroundColor: 'transparent',
+        borderWidth: 2,
+        fill: false,
+        tension: 0.4,
+        pointRadius: 2,
+        pointHoverRadius: 4
+    }));
+
+    historicalChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: historicalDatasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        font: {
                             size: 11
+                        },
+                        boxWidth: 12
+                    }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            if (context.parsed.y === null) return null;
+                            return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + '°F';
+                        }
+                    },
+                    filter: function(tooltipItem) {
+                        return tooltipItem.parsed.y !== null;
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toFixed(1) + '°F';
+                        },
+                        font: {
+                            size: 11
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 45,
+                        font: {
+                            size: 10
                         }
                     }
                 }
@@ -181,7 +331,7 @@ function displayForecastChart(predictions, startTimeStr) {
 
 function showLoading() {
     document.getElementById('loading-spinner').style.display = 'block';
-    document.getElementById('current-weather-display').style.display = 'none';
+    document.getElementById('top-cards-container').style.display = 'none';
 }
 
 function hideLoading() {
@@ -198,6 +348,9 @@ function hideError() {
     document.getElementById('error-message').style.display = 'none';
 }
 
+const REFRESH_INTERVAL_MS = 60 * 60 * 1000; // 1 hour in milliseconds
+
 document.addEventListener('DOMContentLoaded', function() {
     loadForecast();
+    setInterval(loadForecast, REFRESH_INTERVAL_MS);
 });

@@ -277,8 +277,77 @@ main.container {
     100% { transform: rotate(360deg); }
 }
 
-.current-weather-card {
+.top-cards-row {
     grid-column: 1 / -1;
+    display: flex;
+    gap: 2rem;
+}
+
+.current-weather-card {
+    flex: 1;
+}
+
+.shap-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.shap-card h2 {
+    margin-bottom: 0.5rem;
+}
+
+.shap-subtitle {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+.shap-bar-container {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.shap-stacked-bar {
+    display: flex;
+    height: 40px;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.shap-segment {
+    height: 100%;
+    transition: opacity 0.2s ease;
+}
+
+.shap-segment:hover {
+    opacity: 0.8;
+}
+
+.shap-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.shap-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.shap-legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+}
+
+.shap-legend-label {
+    font-size: 0.9rem;
+    color: #495057;
 }
 
 .weather-location h3 {
@@ -294,6 +363,11 @@ main.container {
     align-items: center;
     gap: 3rem;
     margin: 2rem 0;
+}
+
+.weather-emoji {
+    font-size: 4rem;
+    line-height: 1;
 }
 
 .current-temp {
@@ -345,11 +419,18 @@ main.container {
 }
 
 .forecast-card {
-    grid-column: 1 / -1;
+    flex: 1;
+    min-width: 0;
 }
 
-.forecast-chart-container {
-    height: 500px;
+.charts-row {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 2rem;
+}
+
+.chart-container {
+    height: 400px;
     padding: 1rem;
     background: #f8f9fa;
     border-radius: 8px;
@@ -380,6 +461,10 @@ main.container {
         padding: 1.5rem;
     }
 
+    .top-cards-row {
+        flex-direction: column;
+    }
+
     .weather-current {
         flex-direction: column;
         gap: 1.5rem;
@@ -389,7 +474,11 @@ main.container {
         font-size: 3rem;
     }
 
-    .forecast-chart-container {
-        height: 350px;
+    .charts-row {
+        flex-direction: column;
+    }
+
+    .chart-container {
+        height: 300px;
     }
 }

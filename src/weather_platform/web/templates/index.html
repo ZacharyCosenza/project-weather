@@ -20,27 +20,47 @@
 
     <div id="error-message" class="error-message" style="display:none;"></div>
 
-    <div id="current-weather-display" class="card current-weather-card" style="display:none;">
-        <div class="weather-location">
-            <h3 id="current-location-name">-</h3>
+    <div class="top-cards-row" id="top-cards-container" style="display:none;">
+        <div class="card current-weather-card" id="current-weather-display">
+            <div class="weather-location">
+                <h3 id="current-location-name">-</h3>
+            </div>
+            <div class="weather-current">
+                <div class="weather-emoji" id="weather-emoji">🌡️</div>
+                <div class="current-temp">
+                    <span class="temp-large" id="current-temp-value">-</span>
+                    <span class="temp-unit">°F</span>
+                </div>
+                <div class="current-forecast">
+                    <p class="forecast-period" id="forecast-period-name">-</p>
+                    <p id="forecast-description">-</p>
+                    <p class="forecast-time" id="weather-timestamp">-</p>
+                </div>
+            </div>
         </div>
-        <div class="weather-current">
-            <div class="current-temp">
-                <span class="temp-large" id="current-temp-value">-</span>
-                <span class="temp-unit">°F</span>
+
+        <div class="card shap-card" id="shap-display">
+            <h2>Feature Contributions</h2>
+            <p class="shap-subtitle">What's driving the prediction?</p>
+            <div class="shap-bar-container" id="shap-bar-container">
+                <div class="shap-stacked-bar" id="shap-stacked-bar"></div>
             </div>
-            <div class="current-forecast">
-                <p class="forecast-period" id="forecast-period-name">-</p>
-                <p id="forecast-description">-</p>
-                <p class="forecast-time" id="weather-timestamp">-</p>
-            </div>
+            <div class="shap-legend" id="shap-legend"></div>
         </div>
     </div>
 
-    <div class="card forecast-card" id="forecast-card-container" style="display:none;">
-        <h2>24-Hour Temperature Forecast <span class="forecast-subtitle" id="forecast-subtitle">from <span id="forecast-start-time">-</span> at <span id="location-name">-</span></span></h2>
-        <div id="forecast-chart-container">
-            <canvas id="forecast-chart"></canvas>
+    <div class="charts-row" id="charts-row-container" style="display:none;">
+        <div class="card forecast-card">
+            <h2>24-Hour Prediction <span class="forecast-subtitle">from <span id="forecast-start-time">-</span> at <span id="location-name">-</span></span></h2>
+            <div class="chart-container">
+                <canvas id="forecast-chart"></canvas>
+            </div>
+        </div>
+        <div class="card forecast-card">
+            <h2>Historical Temperatures <span class="forecast-subtitle">same dates from past years</span></h2>
+            <div class="chart-container">
+                <canvas id="historical-chart"></canvas>
+            </div>
         </div>
     </div>
 </div>

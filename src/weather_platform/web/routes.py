@@ -54,20 +54,35 @@ def forecast():
         weather_data = get_current_weather(lat, lon)
 
         predictor = get_predictor()
+        start_time = weather_data['start_time']
+        current_temp = weather_data['temperature']
+
         predictions = predictor.predict_24h(
-            start_time=weather_data['start_time'],
-            current_temp=weather_data['temperature']
+            start_time=start_time,
+            current_temp=current_temp
+        )
+        historical = predictor.get_historical_temperatures(
+            start_time=start_time,
+            num_years=5
+        )
+        shap_data = predictor.get_shap_contributions(
+            month=start_time.month,
+            day=start_time.day,
+            hour=start_time.hour,
+            temp=current_temp
         )
 
         return jsonify({
             'success': True,
             'current_weather': {
-                'temperature': weather_data['temperature'],
-                'time': weather_data['start_time'].isoformat(),
+                'temperature': current_temp,
+                'time': start_time.isoformat(),
                 'forecast': weather_data['short_forecast'],
                 'forecast_name': weather_data['forecast_name']
             },
             'predictions': predictions,
+            'historical': historical,
+            'shap': shap_data,
             'location': location_name
         })
 

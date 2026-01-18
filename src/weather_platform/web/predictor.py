@@ -6,7 +6,7 @@ from typing import Dict, Any, Optional, List
 import numpy as np
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import bootstrap_project
-
+import pandas as pd
 
 class WeatherPredictor:
     def __init__(self, project_path: str):
@@ -95,19 +95,6 @@ class WeatherPredictor:
         }
 
     def predict_24h(self, start_time: datetime, current_temp: float) -> List[Dict[str, Any]]:
-        """
-        Generate 24-hour temperature forecast predictions.
-
-        Args:
-            start_time: Starting datetime for forecast
-            current_temp: Current temperature in Fahrenheit
-
-        Returns:
-            List of 24 hourly predictions, each containing:
-                - time: ISO format timestamp
-                - hour: Hour of day (0-23)
-                - predicted_temperature: Predicted temperature in F
-        """
         model = self.load_model()
         predictions = []
 
@@ -127,3 +114,92 @@ class WeatherPredictor:
             })
 
         return predictions
+
+    def get_historical_temperatures(self, start_time: datetime, num_years: int = 5) -> List[Dict[str, Any]]:
+        try:
+            with KedroSession.create(project_path=self.project_path) as session:
+                context = session.load_context()
+                raw_data = context.catalog.load("raw_weather_data")
+
+            raw_data['valid'] = pd.to_datetime(raw_data['valid'], errors='coerce')
+            raw_data['tmpf'] = pd.to_numeric(raw_data['tmpf'], errors='coerce')
+            raw_data = raw_data.dropna(subset=['valid', 'tmpf'])
+
+            raw_data['month'] = raw_data['valid'].dt.month
+            raw_data['day'] = raw_data['valid'].dt.day
+            raw_data['hour'] = raw_data['valid'].dt.hour
+            raw_data['year'] = raw_data['valid'].dt.year
+
+            current_year = start_time.year
+            available_years = sorted(raw_data['year'].unique(), reverse=True)
+            historical_years = [y for y in available_years if y < current_year][:num_years]
+
+            historical_data = []
+
+            for year in historical_years:
+                year_temps = []
+                for i in range(24):
+                    future_time = start_time + timedelta(hours=i)
+                    month = future_time.month
+                    day = future_time.day
+                    hour = future_time.hour
+
+                    matching = raw_data[
+                        (raw_data['year'] == year) &
+                        (raw_data['month'] == month) &
+                        (raw_data['day'] == day) &
+                        (raw_data['hour'] == hour)
+                    ]
+
+                    if not matching.empty:
+                        year_temps.append(float(matching['tmpf'].iloc[0]))
+                    else:
+                        year_temps.append(None)
+
+                historical_data.append({
+                    'year': int(year),
+                    'temperatures': year_temps
+                })
+
+            return historical_data
+
+        except Exception:
+            return []
+
+    def get_shap_contributions(self, month: int, day: int, hour: int, temp: float) -> Dict[str, Any]:
+        """
+        Calculate SHAP values for a single prediction to explain feature contributions.
+
+        Returns normalized percentages that sum to 100%.
+        """
+        import shap
+
+        model = self.load_model()
+        features = np.array([[month, day, hour, temp]])
+        feature_names = ['Month', 'Day', 'Hour', 'Current Temp']
+
+        explainer = shap.TreeExplainer(model)
+        shap_values = explainer.shap_values(features)
+
+        abs_shap = np.abs(shap_values[0])
+        total = abs_shap.sum()
+
+        if total > 0:
+            percentages = (abs_shap / total) * 100
+        else:
+            percentages = np.zeros_like(abs_shap)
+
+        contributions = []
+        for i, name in enumerate(feature_names):
+            contributions.append({
+                'feature': name,
+                'percentage': float(percentages[i]),
+                'shap_value': float(shap_values[0][i])
+            })
+
+        contributions.sort(key=lambda x: x['percentage'], reverse=True)
+
+        return {
+            'contributions': contributions,
+            'base_value': float(explainer.expected_value)
+        }
