@@ -1,4 +1,6 @@
 import logging
+import os
+import secrets
 from pathlib import Path
 from flask import Flask
 from .routes import web_bp
@@ -20,7 +22,7 @@ def create_app(project_path: str = None, scheduler_interval: int = 60, enable_sc
     app.config['KEDRO_PROJECT_PATH'] = str(project_path)
     app.config['SCHEDULER_INTERVAL'] = scheduler_interval
     app.config['PIPELINE_NAME'] = '__default__'
-    app.config['SECRET_KEY'] = 'dev-secret-key-change-in-production'
+    app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY', secrets.token_hex(32))
 
     app.register_blueprint(web_bp)
 

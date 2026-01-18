@@ -4,7 +4,7 @@
 # 01_raw - Raw input data
 raw_weather_data:
   type: pandas.CSVDataset
-  filepath: data/01_raw/LGA_weather_data.csv
+  filepath: data/01_raw/weather_data.csv
 
 # 02_features - Engineered features ready for modeling
 features:

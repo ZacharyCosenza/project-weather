@@ -49,10 +49,30 @@ logs/
 .DS_Store
 Thumbs.db
 
-# Codes
+# Sensitive files
 keys.md
+*.key
+*.pem
+.env
+.env.local
+.env.*.local
+*secret*
+*credential*
+
+# Allow example files
+!.env.example
+
+# ngrok
+ngrok
+ngrok.yml
+.ngrok2/
 
 # Data
 *.csv
 *.parquet
 /data
+
+# Temporary files
+/tmp/
+*.pid
+*.output
