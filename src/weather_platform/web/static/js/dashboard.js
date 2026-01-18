@@ -43,6 +43,7 @@ function displayCurrentWeather(weather, location) {
 }
 
 function displayForecastChart(predictions, startTimeStr) {
+    document.getElementById('forecast-card-container').style.display = 'block';
     const ctx = document.getElementById('forecast-chart').getContext('2d');
 
     const currentTime = new Date();

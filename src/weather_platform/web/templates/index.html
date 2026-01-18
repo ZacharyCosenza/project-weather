@@ -2,46 +2,43 @@
 
 {% block content %}
 <div class="dashboard-grid">
-    <div class="card current-weather-card">
-        <h2>Weather Data & Forecast</h2>
-        <div id="status-indicator" class="status-indicator">
-            <span class="status-dot {% if metrics.model_exists %}status-healthy{% else %}status-error{% endif %}"></span>
-            <span class="status-text">
-                {% if metrics.model_exists %}
-                Model Ready
-                {% else %}
-                Model Not Available - Run pipeline first
-                {% endif %}
-            </span>
-        </div>
-
-        <div id="loading-spinner" class="loading-spinner">
-            <div class="spinner"></div>
-            <p>Loading weather data...</p>
-        </div>
-
-        <div id="current-weather-display" style="display:none;">
-            <div class="weather-location">
-                <h3 id="location-name">-</h3>
-            </div>
-            <div class="weather-current">
-                <div class="current-temp">
-                    <span id="current-temp-value" class="temp-large">-</span>
-                    <span class="temp-unit">°F</span>
-                </div>
-                <div class="current-forecast">
-                    <p id="forecast-description">-</p>
-                    <p class="forecast-period"><span id="forecast-period-name">-</span></p>
-                    <p class="forecast-time"><span id="weather-timestamp">-</span></p>
-                </div>
-            </div>
-        </div>
-
-        <div id="error-message" class="error-message" style="display:none;"></div>
+    <div id="status-indicator" class="status-indicator">
+        <span class="status-dot {% if metrics.model_exists %}status-healthy{% else %}status-error{% endif %}"></span>
+        <span class="status-text">
+            {% if metrics.model_exists %}
+            Model Ready
+            {% else %}
+            Model Not Available - Run pipeline first
+            {% endif %}
+        </span>
     </div>
 
-    <div class="card forecast-card">
-        <h2>24-Hour Temperature Forecast <span class="forecast-subtitle" id="forecast-subtitle">from <span id="forecast-start-time">-</span></span></h2>
+    <div id="loading-spinner" class="loading-spinner">
+        <div class="spinner"></div>
+        <p>Loading forecast...</p>
+    </div>
+
+    <div id="error-message" class="error-message" style="display:none;"></div>
+
+    <div id="current-weather-display" class="card current-weather-card" style="display:none;">
+        <div class="weather-location">
+            <h3 id="current-location-name">-</h3>
+        </div>
+        <div class="weather-current">
+            <div class="current-temp">
+                <span class="temp-large" id="current-temp-value">-</span>
+                <span class="temp-unit">°F</span>
+            </div>
+            <div class="current-forecast">
+                <p class="forecast-period" id="forecast-period-name">-</p>
+                <p id="forecast-description">-</p>
+                <p class="forecast-time" id="weather-timestamp">-</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card forecast-card" id="forecast-card-container" style="display:none;">
+        <h2>24-Hour Temperature Forecast <span class="forecast-subtitle" id="forecast-subtitle">from <span id="forecast-start-time">-</span> at <span id="location-name">-</span></span></h2>
         <div id="forecast-chart-container">
             <canvas id="forecast-chart"></canvas>
         </div>
