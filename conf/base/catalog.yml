@@ -1,0 +1,33 @@
+# Data Catalog
+# This file defines all data sources used in the project
+
+# 01_raw - Raw input data
+raw_weather_data:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/LGA_weather_data.csv
+
+# 02_features - Engineered features ready for modeling
+features:
+  type: pandas.ParquetDataset
+  filepath: data/02_features/weather_features.parquet
+
+train_data:
+  type: pandas.ParquetDataset
+  filepath: data/02_features/train.parquet
+
+val_data:
+  type: pandas.ParquetDataset
+  filepath: data/02_features/val.parquet
+
+test_data:
+  type: pandas.ParquetDataset
+  filepath: data/02_features/test.parquet
+
+# 03_outputs - Models and evaluation metrics
+trained_model:
+  type: pickle.PickleDataset
+  filepath: data/03_outputs/weather_model.pkl
+
+model_metrics:
+  type: json.JSONDataset
+  filepath: data/03_outputs/metrics.json

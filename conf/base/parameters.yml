@@ -1,0 +1,34 @@
+data_engineering:
+  missing_value_threshold: 0.1
+  outlier_std_threshold: 3.0
+
+data_science:
+  feature_columns:
+    - ft_month
+    - ft_day
+    - ft_hour
+    - ft_temp
+  target_column: tgt_tmpf
+  val_size: 0.1
+  test_size: 0.1
+  random_state: 42
+  optuna:
+    flag_use_optuna: False
+    n_trials: 50
+    timeout: 300
+    search_space:
+      n_estimators:
+        low: 50
+        high: 300
+      max_depth:
+        low: 3
+        high: 10
+      learning_rate:
+        low: 0.01
+        high: 0.3
+      subsample:
+        low: 0.6
+        high: 1.0
+      colsample_bytree:
+        low: 0.6
+        high: 1.0
