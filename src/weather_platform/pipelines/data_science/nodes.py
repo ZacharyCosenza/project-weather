@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import optuna
+import shap
+import matplotlib.pyplot as plt
 from typing import Tuple, Dict, Any
 from xgboost import XGBRegressor
 from sklearn.model_selection import train_test_split
@@ -96,3 +98,17 @@ def evaluate_model(model: XGBRegressor, test_data: pd.DataFrame, params: Dict[st
         "rmse": float(np.sqrt(mse)),
         "mae": float(np.mean(np.abs(y_test - y_pred))),
     }
+
+
+def generate_shap_plot(model: XGBRegressor, test_data: pd.DataFrame, params: Dict[str, Any]) -> plt.Figure:
+    feature_columns = params['feature_columns']
+    X_test = test_data[feature_columns]
+
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer(X_test)
+
+    fig, ax = plt.subplots(figsize=(12, 8))
+    shap.plots.beeswarm(shap_values, show=False)
+    plt.title("SHAP Feature Importance")
+    plt.tight_layout()
+    return fig

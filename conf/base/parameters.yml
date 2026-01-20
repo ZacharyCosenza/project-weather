@@ -1,6 +1,6 @@
 data_engineering:
-  missing_value_threshold: 0.1
-  outlier_std_threshold: 3.0
+  reference_date: "2000-01-01"
+  num_lags: 3
 
 dashboard:
   location:
@@ -13,7 +13,11 @@ data_science:
     - ft_month
     - ft_day
     - ft_hour
+    - ft_days_since_2000
     - ft_temp
+    - ft_temp_lag_1h
+    - ft_temp_lag_2h
+    - ft_temp_lag_3h
   target_column: tgt_tmpf
   val_size: 0.1
   test_size: 0.1

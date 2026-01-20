@@ -2,45 +2,67 @@ import logging
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-from kedro.framework.session import KedroSession
 
 logger = logging.getLogger(__name__)
 
 
-def run_kedro_pipeline(project_path: str, pipeline_name: str = "__default__"):
-    try:
-        start_time = datetime.now()
-        logger.info(f"Starting Kedro pipeline run: {pipeline_name}")
+def update_forecast(app):
+    with app.app_context():
+        try:
+            start_time = datetime.now()
+            logger.info("Starting hourly forecast update")
 
-        with KedroSession.create(project_path=project_path) as session:
-            session.run(pipeline_name=pipeline_name)
+            from .predictor import WeatherPredictor
+            from .weather_api import get_current_weather
+            from kedro.framework.session import KedroSession
+            from kedro.framework.startup import bootstrap_project
 
-        duration = (datetime.now() - start_time).total_seconds()
-        logger.info(f"Pipeline completed successfully in {duration:.2f} seconds")
+            project_path = app.config['KEDRO_PROJECT_PATH']
+            bootstrap_project(project_path)
 
-    except Exception as e:
-        logger.error(f"Pipeline run failed: {str(e)}", exc_info=True)
+            with KedroSession.create(project_path=project_path) as session:
+                context = session.load_context()
+                dashboard_config = context.params.get('dashboard', {})
+                location_config = dashboard_config.get('location', {})
+                lat = location_config.get('latitude')
+                lon = location_config.get('longitude')
+
+            if lat is None or lon is None:
+                logger.error("Location coordinates not configured")
+                return
+
+            weather_data = get_current_weather(lat, lon)
+            predictor = WeatherPredictor(project_path)
+
+            current_temp = weather_data['temperature']
+            start_time_weather = weather_data['start_time']
+
+            predictor.save_temperature(start_time_weather, current_temp)
+
+            duration = (datetime.now() - start_time).total_seconds()
+            logger.info(f"Forecast update completed in {duration:.2f} seconds")
+
+        except Exception as e:
+            logger.error(f"Forecast update failed: {str(e)}", exc_info=True)
 
 
 def init_scheduler(app) -> BackgroundScheduler:
     scheduler = BackgroundScheduler()
 
     interval_minutes = app.config.get('SCHEDULER_INTERVAL', 60)
-    project_path = app.config.get('KEDRO_PROJECT_PATH')
-    pipeline_name = app.config.get('PIPELINE_NAME', '__default__')
 
     scheduler.add_job(
-        func=run_kedro_pipeline,
-        args=[project_path, pipeline_name],
+        func=update_forecast,
+        args=[app],
         trigger=IntervalTrigger(minutes=interval_minutes),
-        id='kedro_pipeline_job',
-        name='Run Kedro Pipeline',
+        id='forecast_update_job',
+        name='Update Forecast',
         misfire_grace_time=60,
         coalesce=True,
         replace_existing=True
     )
 
     scheduler.start()
-    logger.info(f"Scheduler initialized. Pipeline will run every {interval_minutes} minutes")
+    logger.info(f"Scheduler initialized. Forecast will update every {interval_minutes} minutes")
 
     return scheduler

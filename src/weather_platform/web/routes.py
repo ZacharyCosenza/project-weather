@@ -1,11 +1,10 @@
-from flask import Blueprint, render_template, request, jsonify, current_app
+from flask import Blueprint, render_template, jsonify, current_app
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import bootstrap_project
 from .predictor import WeatherPredictor
 from .weather_api import get_current_weather
 
 web_bp = Blueprint('web', __name__)
-
 _bootstrapped = False
 
 
@@ -29,7 +28,6 @@ def index():
         initial_metrics = predictor.get_metrics()
     except Exception:
         initial_metrics = {'model_exists': False}
-
     return render_template('index.html', metrics=initial_metrics)
 
 
@@ -52,25 +50,15 @@ def forecast():
                 }), 500
 
         weather_data = get_current_weather(lat, lon)
-
         predictor = get_predictor()
         start_time = weather_data['start_time']
         current_temp = weather_data['temperature']
 
-        predictions = predictor.predict_24h(
-            start_time=start_time,
-            current_temp=current_temp
-        )
-        historical = predictor.get_historical_temperatures(
-            start_time=start_time,
-            num_years=5
-        )
-        shap_data = predictor.get_shap_contributions(
-            month=start_time.month,
-            day=start_time.day,
-            hour=start_time.hour,
-            temp=current_temp
-        )
+        predictor.save_temperature(start_time, current_temp)
+        lag_temps = predictor.get_lag_temperatures(start_time)
+        predictions = predictor.predict_24h(start_time=start_time, current_temp=current_temp)
+        historical = predictor.get_historical_temperatures(start_time=start_time, num_years=5)
+        shap_data = predictor.get_shap_contributions(dt=start_time, temp=current_temp, lag_temps=lag_temps)
 
         return jsonify({
             'success': True,
@@ -83,7 +71,8 @@ def forecast():
             'predictions': predictions,
             'historical': historical,
             'shap': shap_data,
-            'location': location_name
+            'location': location_name,
+            'lag_temperatures': lag_temps
         })
 
     except Exception as e:
@@ -98,12 +87,8 @@ def metrics():
         return jsonify(metrics_data)
     except Exception as e:
         return jsonify({
-            'mse': None,
-            'rmse': None,
-            'mae': None,
-            'last_updated': 'N/A',
-            'model_exists': False,
-            'error': str(e)
+            'mse': None, 'rmse': None, 'mae': None,
+            'last_updated': 'N/A', 'model_exists': False, 'error': str(e)
         }), 500
 
 
@@ -112,7 +97,6 @@ def health():
     try:
         predictor = get_predictor()
         metrics_data = predictor.get_metrics()
-
         scheduler_running = hasattr(current_app, 'scheduler') and current_app.scheduler.running
 
         return jsonify({
@@ -122,7 +106,4 @@ def health():
             'last_metrics_update': metrics_data.get('last_updated', 'Unknown')
         })
     except Exception as e:
-        return jsonify({
-            'status': 'unhealthy',
-            'error': str(e)
-        }), 500
+        return jsonify({'status': 'unhealthy', 'error': str(e)}), 500
