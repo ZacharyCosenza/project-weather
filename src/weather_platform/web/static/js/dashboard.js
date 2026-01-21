@@ -387,7 +387,7 @@ function hideError() {
     document.getElementById('error-message').style.display = 'none';
 }
 
-const REFRESH_INTERVAL_MS = 60 * 60 * 1000; // 1 hour in milliseconds
+const REFRESH_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes in milliseconds
 
 document.addEventListener('DOMContentLoaded', function() {
     loadForecast();
