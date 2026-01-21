@@ -2,17 +2,6 @@
 
 {% block content %}
 <div class="dashboard-grid">
-    <div id="status-indicator" class="status-indicator">
-        <span class="status-dot {% if metrics.model_exists %}status-healthy{% else %}status-error{% endif %}"></span>
-        <span class="status-text">
-            {% if metrics.model_exists %}
-            Model Ready
-            {% else %}
-            Model Not Available - Run pipeline first
-            {% endif %}
-        </span>
-    </div>
-
     <div id="loading-spinner" class="loading-spinner">
         <div class="spinner"></div>
         <p>Loading forecast...</p>
@@ -20,7 +9,7 @@
 
     <div id="error-message" class="error-message" style="display:none;"></div>
 
-    <div class="top-cards-row" id="top-cards-container" style="display:none;">
+    <div class="cards-grid" id="top-cards-container" style="display:none;">
         <div class="card current-weather-card" id="current-weather-display">
             <div class="weather-location">
                 <h3 id="current-location-name">-</h3>
@@ -36,6 +25,10 @@
                     <p id="forecast-description">-</p>
                     <p class="forecast-time" id="weather-timestamp">-</p>
                 </div>
+            </div>
+            <div class="weather-bot-summary" id="weather-bot-content">
+                <p class="weather-bot-header">Weather-Bot <span class="weather-bot-model" id="weather-bot-model"></span></p>
+                <p class="weather-bot-message" id="weather-bot-message">Loading forecast summary...</p>
             </div>
         </div>
 
@@ -60,6 +53,36 @@
             <h2>Historical Temperatures <span class="forecast-subtitle">same dates from past years</span></h2>
             <div class="chart-container">
                 <canvas id="historical-chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="technical-details" id="technical-details" style="display:none;">
+        <h3>Technical Details</h3>
+        <div class="tech-grid">
+            <div class="tech-item">
+                <span class="tech-label">Prediction Model</span>
+                <span class="tech-value" id="tech-model">XGBoost</span>
+            </div>
+            <div class="tech-item">
+                <span class="tech-label">Features</span>
+                <span class="tech-value" id="tech-features">-</span>
+            </div>
+            <div class="tech-item">
+                <span class="tech-label">Lag Temperatures</span>
+                <span class="tech-value" id="tech-lags">-</span>
+            </div>
+            <div class="tech-item">
+                <span class="tech-label">Data Source</span>
+                <span class="tech-value">NWS weather.gov API</span>
+            </div>
+            <div class="tech-item">
+                <span class="tech-label">LLM Model</span>
+                <span class="tech-value" id="tech-llm">-</span>
+            </div>
+            <div class="tech-item">
+                <span class="tech-label">Last Updated</span>
+                <span class="tech-value" id="tech-updated">-</span>
             </div>
         </div>
     </div>

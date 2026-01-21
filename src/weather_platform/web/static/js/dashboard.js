@@ -12,7 +12,9 @@ async function loadForecast() {
         if (data.success) {
             displayCurrentWeather(data.current_weather, data.location);
             displayShapContributions(data.shap);
+            displayWeatherBot(data.weather_bot);
             displayCharts(data.predictions, data.current_weather.time, data.historical);
+            displayTechnicalDetails(data.technical, data.current_weather.time);
             hideLoading();
         } else {
             showError(data.error || 'Failed to load forecast');
@@ -53,6 +55,43 @@ function displayCurrentWeather(weather, location) {
     document.getElementById('forecast-start-time').textContent = formattedDate;
 
     document.getElementById('top-cards-container').style.display = 'flex';
+}
+
+function displayWeatherBot(botData) {
+    const messageEl = document.getElementById('weather-bot-message');
+    const modelEl = document.getElementById('weather-bot-model');
+
+    if (botData && botData.summary) {
+        messageEl.textContent = botData.summary;
+        modelEl.textContent = `powered by ${botData.model_name}`;
+    } else {
+        messageEl.textContent = 'Weather-Bot model not available. Run the notebook to download the model.';
+        messageEl.classList.add('weather-bot-unavailable');
+        modelEl.textContent = '';
+    }
+}
+
+function displayTechnicalDetails(technical, updateTime) {
+    if (!technical) return;
+
+    document.getElementById('technical-details').style.display = 'block';
+
+    const features = technical.feature_columns || [];
+    const featureNames = features.map(f => f.replace('ft_', '').replace(/_/g, ' ')).join(', ');
+    document.getElementById('tech-features').textContent = featureNames || '-';
+
+    document.getElementById('tech-lags').textContent = `${technical.num_lags} hours`;
+    document.getElementById('tech-llm').textContent = technical.llm_model || '-';
+
+    const updatedTime = new Date(updateTime);
+    document.getElementById('tech-updated').textContent = updatedTime.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+    });
 }
 
 function displayShapContributions(shapData) {

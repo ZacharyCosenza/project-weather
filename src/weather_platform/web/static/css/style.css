@@ -277,18 +277,19 @@ main.container {
     100% { transform: rotate(360deg); }
 }
 
-.top-cards-row {
+.cards-grid {
     grid-column: 1 / -1;
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 2rem;
 }
 
 .current-weather-card {
-    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .shap-card {
-    flex: 1;
     display: flex;
     flex-direction: column;
 }
@@ -348,6 +349,38 @@ main.container {
 .shap-legend-label {
     font-size: 0.9rem;
     color: #495057;
+}
+
+.weather-bot-summary {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-top: 1.5rem;
+}
+
+.weather-bot-header {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1565c0;
+    margin: 0 0 0.5rem 0;
+}
+
+.weather-bot-model {
+    font-weight: 400;
+    color: #5c6bc0;
+    font-size: 0.75rem;
+}
+
+.weather-bot-message {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #1565c0;
+    margin: 0;
+}
+
+.weather-bot-unavailable {
+    color: #6c757d;
+    font-style: italic;
 }
 
 .weather-location h3 {
@@ -425,7 +458,8 @@ main.container {
 
 .charts-row {
     grid-column: 1 / -1;
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 2rem;
 }
 
@@ -434,6 +468,47 @@ main.container {
     padding: 1rem;
     background: #f8f9fa;
     border-radius: 8px;
+}
+
+.technical-details {
+    grid-column: 1 / -1;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    padding: 1.5rem 2rem;
+    margin-top: 1rem;
+}
+
+.technical-details h3 {
+    color: #495057;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.tech-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.tech-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.tech-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.tech-value {
+    font-size: 0.9rem;
+    color: #2c3e50;
+    font-weight: 500;
 }
 
 .footer {
@@ -461,8 +536,8 @@ main.container {
         padding: 1.5rem;
     }
 
-    .top-cards-row {
-        flex-direction: column;
+    .cards-grid {
+        grid-template-columns: 1fr;
     }
 
     .weather-current {
@@ -475,7 +550,7 @@ main.container {
     }
 
     .charts-row {
-        flex-direction: column;
+        grid-template-columns: 1fr;
     }
 
     .chart-container {

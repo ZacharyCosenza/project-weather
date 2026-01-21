@@ -1,8 +1,10 @@
+from pathlib import Path
 from flask import Blueprint, render_template, jsonify, current_app
 from kedro.framework.session import KedroSession
 from kedro.framework.startup import bootstrap_project
 from .predictor import WeatherPredictor
 from .weather_api import get_current_weather
+from . import weather_bot
 
 web_bp = Blueprint('web', __name__)
 _bootstrapped = False
@@ -60,6 +62,18 @@ def forecast():
         historical = predictor.get_historical_temperatures(start_time=start_time, num_years=5)
         shap_data = predictor.get_shap_contributions(dt=start_time, temp=current_temp, lag_temps=lag_temps)
 
+        project_path = current_app.config['KEDRO_PROJECT_PATH']
+        ai_config = context.params.get('ai', {})
+        model_path = ai_config.get('model_path', 'data/05_ai/tinyllama')
+        model_name = ai_config.get('model_name', 'TinyLlama')
+        weather_bot.load_model(str(Path(project_path) / model_path))
+        bot_summary = weather_bot.generate_forecast_summary(predictions, current_temp, location_name)
+
+        data_science_config = context.params.get('data_science', {})
+        feature_columns = data_science_config.get('feature_columns', [])
+        data_engineering_config = context.params.get('data_engineering', {})
+        num_lags = data_engineering_config.get('num_lags', 3)
+
         return jsonify({
             'success': True,
             'current_weather': {
@@ -72,7 +86,16 @@ def forecast():
             'historical': historical,
             'shap': shap_data,
             'location': location_name,
-            'lag_temperatures': lag_temps
+            'lag_temperatures': lag_temps,
+            'weather_bot': {
+                'summary': bot_summary,
+                'model_name': model_name
+            },
+            'technical': {
+                'feature_columns': feature_columns,
+                'num_lags': num_lags,
+                'llm_model': model_name
+            }
         })
 
     except Exception as e:
