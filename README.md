@@ -1,74 +1,68 @@
-# Weather Temperature Prediction Platform
+# project-weather
 
-Machine learning pipeline for predicting hourly temperature using XGBoost and historical weather data. Built with Kedro for reproducible data science workflows.
+Temperature prediction using XGBoost with a Flask web dashboard and LLM-powered forecast summaries.
 
-## Features
+![24-Hour Prediction](images/fig_prediction.png)
 
-- **Temperature Prediction**: Predict next-hour temperature based on current conditions
-- **Web Dashboard**: Interactive Flask-based interface for live predictions
-- **Automated Pipeline**: Scheduled model retraining and metric updates
+## Model
 
-## Quick Start
+Predicts hourly temperature using an XGBoost regressor trained on historical ASOS data from Iowa State Mesonet. The model uses the following features:
 
-### Installation
+| Feature | Description |
+|---------|-------------|
+| `ft_month` | Month (1-12) |
+| `ft_day` | Day of month (1-31) |
+| `ft_hour` | Hour of day (0-23) |
+| `ft_days_since_2000` | Days elapsed since Jan 1, 2000 (captures long-term trends) |
+| `ft_temp` | Current temperature (°F) |
+| `ft_temp_lag_1h` | Temperature 1 hour ago |
+| `ft_temp_lag_2h` | Temperature 2 hours ago |
+| `ft_temp_lag_3h` | Temperature 3 hours ago |
 
-```bash
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install -e .
-```
+The number of lag features is configurable in `conf/base/parameters.yml`. Features can be toggled on/off via the `feature_columns` list.
 
-### Run the Pipeline
+## SHAP Feature Contributions
 
-```bash
-kedro run
-```
+The dashboard displays SHAP (SHapley Additive exPlanations) values showing how each feature contributes to the prediction. This provides interpretability into which factors are driving the forecast at any given time.
 
-This executes:
-1. Data engineering: Feature extraction (month, day, hour, temperature)
-2. Data science: Model training, validation, and evaluation
+![SHAP Contributions](images/fig_shap.png)
 
-### Launch Web Dashboard
+## Historical Comparison
 
-```bash
-python run_dashboard.py
-```
+Predictions are displayed alongside historical temperature profiles from the same calendar date in previous years, providing context for how current conditions compare to past patterns.
 
-Access at: http://localhost:5000
+![Historical Comparison](images/fig_historical.png)
 
-**Options:**
-- `--port 8080` - Custom port
-- `--interval 30` - Pipeline run interval (minutes)
-- `--no-scheduler` - Disable auto-scheduling
+## Weather-Bot
+
+The dashboard includes an LLM-powered assistant that generates natural language summaries of the 24-hour forecast. It uses TinyLlama (1.1B parameters) to produce short, readable descriptions like:
+
+> "Temperatures will rise to 42°F this afternoon before dropping to 28°F overnight."
+
+The model weights are stored locally in `data/05_ai/tinyllama/` after running the setup notebook.
+
+![Weather-Bot](images/fig_llm.png)
 
 ## Web Dashboard
 
-The dashboard provides:
-- **Prediction Form**: Input weather conditions to get next-hour temperature forecast
-- **Live Metrics**: Auto-refreshing model performance statistics
-- **Status Indicators**: Model availability and last update timestamp
+The Flask-based dashboard provides:
 
-### Public Access with ngrok
+- **Current conditions** fetched live from the NWS weather.gov API
+- **24-hour temperature forecast** displayed as an interactive chart
+- **Historical profiles** showing same-date temperatures from past years
+- **SHAP visualization** as a stacked bar showing feature contributions
+- **Weather-Bot summary** with natural language forecast description
+- **Technical details** panel showing model configuration and data sources
 
-Share the dashboard publicly:
+The dashboard auto-updates hourly, fetching new weather data and storing temperatures to build up the lag feature history needed for predictions.
 
-```bash
-./start_public_dashboard.sh
-```
+## Data Sources
 
-Stop with:
-```bash
-./stop_public_dashboard.sh
-```
+| Source | Usage |
+|--------|-------|
+| Iowa State Mesonet ASOS | Historical training data |
+| NWS weather.gov API | Live inference data |
 
-## Model Details
+## Configuration
 
-**Algorithm**: XGBoost Regressor
-
-**Input Features**:
-- `ft_month`: Month (1-12)
-- `ft_day`: Day of month (1-31)
-- `ft_hour`: Hour of day (0-23)
-- `ft_temp`: Current temperature (°F)
-
-**Target**: `tgt_tmpf` - Temperature for next hour (°F)
+All model parameters, feature selection, and location settings are configured in `conf/base/parameters.yml`. The Kedro pipeline handles data engineering (feature extraction, lag creation) and model training with SHAP plot generation.
