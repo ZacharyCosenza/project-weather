@@ -89,6 +89,8 @@ class WeatherPredictor:
             (df['hour'] == dt_naive.hour)
         ).any()
 
+        print(f"[API] year={dt_naive.year} month={dt_naive.month:02d} day={dt_naive.day:02d} hour={dt_naive.hour:02d} temp={temperature:.1f}F timestamp={dt_naive.isoformat()}")
+
         if not exists:
             new_row = pd.DataFrame([{
                 'year': dt_naive.year,
@@ -100,6 +102,7 @@ class WeatherPredictor:
             }])
             df = pd.concat([df, new_row], ignore_index=True)
             self._save_temperatures_df(df)
+            print(f"[API] Saved new temperature record")
 
     def load_temperature(self, dt: datetime) -> Optional[float]:
         df = self._load_temperatures_df()
